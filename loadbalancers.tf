@@ -78,8 +78,10 @@ resource "azurerm_application_gateway" "alb" {
   # App2 Backend Configs
   backend_address_pool {
     name         = "ALB-CORE-APP2-${var.project-code}-AGW-BEADDRPOOL"
-    ip_addresses = [azurerm_private_endpoint.app2_wordpress.private_service_connection[0].private_ip_address]
-    fqdns        = [azurerm_linux_web_app.app2_wordpress.default_hostname]
+    #ip_addresses = [azurerm_private_endpoint.app2_wordpress.private_service_connection[0].private_ip_address]
+    #fqdns        = [azurerm_linux_web_app.app2_wordpress.default_hostname]
+    #fqdns = [azurerm_private_endpoint.app2_wordpress.private_dns_zone_configs[0].record_sets[0].fqdn]
+    fqdns = [azurerm_linux_web_app.app2_wordpress.default_hostname]
   }
   backend_http_settings {
     name                  = "ALB-CORE-APP2-${var.project-code}-AGW-BEHTTPSETTINGS"
