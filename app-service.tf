@@ -24,7 +24,7 @@ resource "azurerm_linux_web_app" "app2_wordpress" {
     WORDPRESS_DB_USER     = "${var.admin_username}@${azurerm_mysql_server.shared-server.name}"
     WORDPRESS_DB_PASSWORD = "${random_password.db-secret.result}"
     WORDPRESS_DB_NAME     = "${azurerm_mysql_database.shared-db.name}"
-    WORDPRESS_CONFIG_EXTRA = "define('WP_HOME','http://${azurerm_public_ip.alb-pubip.ip_address}/app2');define('WP_SITEURL','http://${azurerm_public_ip.alb-pubip.ip_address}/app2');"
+    WORDPRESS_CONFIG_EXTRA = "define('WP_HOME','http://${azurerm_public_ip.alb-pubip.ip_address}/app2/');define('WP_SITEURL','http://${azurerm_public_ip.alb-pubip.ip_address}/app2/');"
   }
 }
 

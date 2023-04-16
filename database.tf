@@ -16,8 +16,8 @@ resource "azurerm_mysql_server" "shared-server" {
   storage_mb = 5120
   version    = "8.0"
 
-  ssl_enforcement_enabled          = false
-  ssl_minimal_tls_version_enforced = "TLS1_2"
+  ssl_enforcement_enabled = false
+  #ssl_minimal_tls_version_enforced = "TLS1_2"
 }
 
 # DB

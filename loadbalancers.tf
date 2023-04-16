@@ -77,20 +77,21 @@ resource "azurerm_application_gateway" "alb" {
 
   # App2 Backend Configs
   backend_address_pool {
-    name         = "ALB-CORE-APP2-${var.project-code}-AGW-BEADDRPOOL"
+    name = "ALB-CORE-APP2-${var.project-code}-AGW-BEADDRPOOL"
     #ip_addresses = [azurerm_private_endpoint.app2_wordpress.private_service_connection[0].private_ip_address]
     #fqdns        = [azurerm_linux_web_app.app2_wordpress.default_hostname]
     #fqdns = [azurerm_private_endpoint.app2_wordpress.private_dns_zone_configs[0].record_sets[0].fqdn]
     fqdns = [azurerm_linux_web_app.app2_wordpress.default_hostname]
   }
   backend_http_settings {
-    name                  = "ALB-CORE-APP2-${var.project-code}-AGW-BEHTTPSETTINGS"
-    path                  = "/"
-    cookie_based_affinity = "Disabled"
-    port                  = 80
-    protocol              = "Http"
-    request_timeout       = 60
-    probe_name            = "ALB-CORE-APP2-${var.project-code}-AGW-PROBE"
+    name                                = "ALB-CORE-APP2-${var.project-code}-AGW-BEHTTPSETTINGS"
+    path                                = "/"
+    cookie_based_affinity               = "Disabled"
+    port                                = 80
+    protocol                            = "Http"
+    request_timeout                     = 60
+    pick_host_name_from_backend_address = true # Required so that the app service can be accessed via the FQDN
+    probe_name                          = "ALB-CORE-APP2-${var.project-code}-AGW-PROBE"
   }
   probe {
     name                = "ALB-CORE-APP2-${var.project-code}-AGW-PROBE"
@@ -102,7 +103,7 @@ resource "azurerm_application_gateway" "alb" {
     port                = 80
     path                = "/"
     match { # Optional
-      status_code = ["200-399"]
+      status_code = ["200-499"]
     }
   }
 
