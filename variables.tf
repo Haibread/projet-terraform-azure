@@ -10,12 +10,12 @@ variable "location" {
   default     = "West Europe"
 }
 
-variable "admin_username"{
+variable "admin_username" {
   description = "Admin username for the VMs"
   default     = "adminuser"
 }
 
-variable "admin_ssh_pubkey"{
+variable "admin_ssh_pubkey" {
   description = "Admin SSH public key to use for the instances"
   default     = ""
 }

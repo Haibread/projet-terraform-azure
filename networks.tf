@@ -88,7 +88,14 @@ resource "azurerm_subnet" "app2-subnet-web" {
   name                 = "APP-APP2-${var.project-code}-SUBNET"
   resource_group_name  = azurerm_resource_group.app2.name
   virtual_network_name = azurerm_virtual_network.app2-vnet.name
-  address_prefixes     = ["10.2.1.0/24"]
+  address_prefixes     = ["10.2.1.0/24"] /* 
+  delegation { # Delegation is needed in order to create a web app in this subnet
+    name = "web-delegation"
+    service_delegation {
+      name    = "Microsoft.Web/serverFarms"
+      actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
+    }
+  } */
 }
 
 # shared-vnet
@@ -108,4 +115,73 @@ resource "azurerm_subnet" "shared-subnet-web" {
   resource_group_name  = azurerm_resource_group.shared.name
   virtual_network_name = azurerm_virtual_network.shared-vnet.name
   address_prefixes     = ["10.3.1.0/24"]
+}
+
+# Setup peerings
+resource "azurerm_virtual_network_peering" "core-to-app1" {
+  name                         = "CORE-APP1-${var.project-code}-PEERING"
+  resource_group_name          = azurerm_resource_group.core.name
+  virtual_network_name         = azurerm_virtual_network.core-vnet.name
+  remote_virtual_network_id    = azurerm_virtual_network.app1-vnet.id
+  allow_virtual_network_access = true
+}
+
+
+resource "azurerm_virtual_network_peering" "app1-to-core" {
+  name                         = "APP1-CORE-${var.project-code}-PEERING"
+  resource_group_name          = azurerm_resource_group.app1.name
+  virtual_network_name         = azurerm_virtual_network.app1-vnet.name
+  remote_virtual_network_id    = azurerm_virtual_network.core-vnet.id
+  allow_virtual_network_access = true
+}
+
+resource "azurerm_virtual_network_peering" "core-to-app2" {
+  name                         = "CORE-APP2-${var.project-code}-PEERING"
+  resource_group_name          = azurerm_resource_group.core.name
+  virtual_network_name         = azurerm_virtual_network.core-vnet.name
+  remote_virtual_network_id    = azurerm_virtual_network.app2-vnet.id
+  allow_virtual_network_access = true
+}
+
+
+resource "azurerm_virtual_network_peering" "app2-to-core" {
+  name                         = "APP2-CORE-${var.project-code}-PEERING"
+  resource_group_name          = azurerm_resource_group.app2.name
+  virtual_network_name         = azurerm_virtual_network.app2-vnet.name
+  remote_virtual_network_id    = azurerm_virtual_network.core-vnet.id
+  allow_virtual_network_access = true
+}
+
+resource "azurerm_virtual_network_peering" "shared-to-app1" {
+  name                         = "SHARED-APP1-${var.project-code}-PEERING"
+  resource_group_name          = azurerm_resource_group.shared.name
+  virtual_network_name         = azurerm_virtual_network.shared-vnet.name
+  remote_virtual_network_id    = azurerm_virtual_network.app1-vnet.id
+  allow_virtual_network_access = true
+}
+
+
+resource "azurerm_virtual_network_peering" "app1-to-shared" {
+  name                         = "APP1-SHARED-${var.project-code}-PEERING"
+  resource_group_name          = azurerm_resource_group.app1.name
+  virtual_network_name         = azurerm_virtual_network.app1-vnet.name
+  remote_virtual_network_id    = azurerm_virtual_network.shared-vnet.id
+  allow_virtual_network_access = true
+}
+
+resource "azurerm_virtual_network_peering" "shared-to-app2" {
+  name                         = "SHARED-APP2-${var.project-code}-PEERING"
+  resource_group_name          = azurerm_resource_group.shared.name
+  virtual_network_name         = azurerm_virtual_network.shared-vnet.name
+  remote_virtual_network_id    = azurerm_virtual_network.app2-vnet.id
+  allow_virtual_network_access = true
+}
+
+
+resource "azurerm_virtual_network_peering" "app2-to-shared" {
+  name                         = "APP2-SHARED-${var.project-code}-PEERING"
+  resource_group_name          = azurerm_resource_group.app2.name
+  virtual_network_name         = azurerm_virtual_network.app2-vnet.name
+  remote_virtual_network_id    = azurerm_virtual_network.shared-vnet.id
+  allow_virtual_network_access = true
 }
