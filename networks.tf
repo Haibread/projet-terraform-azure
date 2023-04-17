@@ -88,14 +88,7 @@ resource "azurerm_subnet" "app2-subnet-web" {
   name                 = "APP-APP2-${var.project-code}-SUBNET"
   resource_group_name  = azurerm_resource_group.app2.name
   virtual_network_name = azurerm_virtual_network.app2-vnet.name
-  address_prefixes     = ["10.2.1.0/24"] /* 
-  delegation { # Delegation is needed in order to create a web app in this subnet
-    name = "web-delegation"
-    service_delegation {
-      name    = "Microsoft.Web/serverFarms"
-      actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
-    }
-  } */
+  address_prefixes     = ["10.2.1.0/24"]
 }
 
 # shared-vnet

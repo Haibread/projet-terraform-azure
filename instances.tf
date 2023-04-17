@@ -121,9 +121,6 @@ resource "azurerm_linux_virtual_machine_scale_set" "app1-scaleset" {
       name      = "APP1-${var.project-code}-VMSS-IPCFG"
       subnet_id = azurerm_subnet.app1-subnet-web.id
       primary   = true
-      #application_gateway_backend_address_pool_ids = [
-      #  azurerm_application_gateway.alb.backend_address_pool[0].id
-      #]
       application_gateway_backend_address_pool_ids = [
         for backend_address_pool in azurerm_application_gateway.alb.backend_address_pool :
         backend_address_pool.id

@@ -74,9 +74,3 @@ resource "azurerm_private_dns_cname_record" "app2" {
   zone_name           = azurerm_private_dns_zone.app2_wordpress.name
   resource_group_name = azurerm_resource_group.app2.name
 }
-
-/* resource "azurerm_app_service_custom_hostname_binding" "app2-binding" {
-  hostname         = "app2-jtm-wordpress.privatelink.azurewebsites.net"
-  app_service_name = azurerm_linux_web_app.app2_wordpress.name
-  resource_group_name = azurerm_resource_group.app2.name
-} */
