@@ -20,10 +20,10 @@ resource "azurerm_linux_web_app" "app2_wordpress" {
     }
   }
   app_settings = {
-    WORDPRESS_DB_HOST     = "${azurerm_mysql_server.shared-server.fqdn}"
-    WORDPRESS_DB_USER     = "${var.admin_username}@${azurerm_mysql_server.shared-server.name}"
-    WORDPRESS_DB_PASSWORD = "${random_password.db-secret.result}"
-    WORDPRESS_DB_NAME     = "${azurerm_mysql_database.shared-db.name}"
+    WORDPRESS_DB_HOST      = "${azurerm_mysql_server.shared-server.fqdn}"
+    WORDPRESS_DB_USER      = "${var.admin_username}@${azurerm_mysql_server.shared-server.name}"
+    WORDPRESS_DB_PASSWORD  = "${random_password.db-secret.result}"
+    WORDPRESS_DB_NAME      = "${azurerm_mysql_database.shared-db.name}"
     WORDPRESS_CONFIG_EXTRA = "define('WP_HOME','http://${azurerm_public_ip.alb-pubip.ip_address}/app2/');define('WP_SITEURL','http://${azurerm_public_ip.alb-pubip.ip_address}/app2/');"
   }
 }
@@ -42,7 +42,7 @@ resource "azurerm_private_endpoint" "app2_wordpress" {
   }
 
   private_dns_zone_group {
-    name = "privatednszonegroup"
+    name                 = "privatednszonegroup"
     private_dns_zone_ids = [azurerm_private_dns_zone.app2_wordpress.id]
   }
 }
@@ -57,7 +57,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "app2_wordpress" {
   name                  = "APP2-${var.project-code}-PRIVATEDNSZONE-VNETLINK"
   resource_group_name   = azurerm_resource_group.app2.name
   private_dns_zone_name = azurerm_private_dns_zone.app2_wordpress.name
-  virtual_network_id    = azurerm_virtual_network.app2-vnet.id 
+  virtual_network_id    = azurerm_virtual_network.app2-vnet.id
 }
 
 # Access DNS zone for the core virtual network
