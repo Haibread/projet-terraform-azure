@@ -93,7 +93,7 @@ Le second applicatif est bien disponible à l'adresse `http://20.93.138.101/app2
 
 #### Résultat de la commande terraform graph
 
-Schéma du déploiement obtenu avec la commande `terraform graph` :
+Schéma du déploiement obtenu avec la commande `terraform graph`, aussi disponible dans le dossier misc de ce repository :
 
 ![terraform-graph](./misc/terraform-graph.png)
 
@@ -117,10 +117,93 @@ Resource Group APP2 :
 
 ## Problèmes rencontrés
 
-blabla pas rencontré de difficulté particulière de dépoiement sauf pour ces points :
+Pendant la mise en place de ce projet, nous n'avons pas rencontré de difficulté particulière en dehors de celles qui se trouvent dans cette partie du document.
 
-- Private endoint pour le app service + la zone dns privée
-- Comment changer le path prefix pour wordpress
-- Comment générer les règles de fw pour autoriser l'app service à aller vers la BDD
-- Comment faire un template du cloudinit pour bootstapper wordpress
-- Comment configurer l'application gateway avec les différents backends et l'url_path_map
+### Créer un template cloudinit pour démarrer Wordpress
+
+Une des difficultés rencontrées a été de démarrer les VMs de l'APP1 avec Wordpress installé et configuré.
+
+La solution que nous avons trouvés a été de démarrer les VMs avec un template cloudinit.
+
+Lorsque nous démarrons les ressources `azurerm_linux_virtual_machine_scale_set`, nous ajoutons un paramètre `custom_data` qui nous permet d'exécuter un script au démarrage des instances.
+Ce script est généré dynamiquement grâce à des variables présentes dans le fichier terraform :
+
+```bash
+  vars = {
+    WORDPRESS_DB_HOST     = "${azurerm_mysql_server.shared-server.fqdn}"
+    WORDPRESS_DB_USER     = "${var.admin_username}@${azurerm_mysql_server.shared-server.name}"
+    WORDPRESS_DB_PASSWORD = "${random_password.db-secret.result}"
+    WORDPRESS_DB_NAME     = "${azurerm_mysql_database.shared-db.name}"
+    WP_HOME               = "http://${azurerm_public_ip.alb-pubip.ip_address}/app1"
+    WP_SITEURL            = "http://${azurerm_public_ip.alb-pubip.ip_address}/app1"
+  }
+```
+
+Ces variables permettent d'effecuter un template du fichier suivant : 
+
+```yml
+#cloud-config
+packages:
+  - docker.io
+runcmd:
+  - sudo docker run --name wordpress -p 80:80 -e WORDPRESS_DB_HOST="${WORDPRESS_DB_HOST}" -e WORDPRESS_DB_USER="${WORDPRESS_DB_USER}" -e WORDPRESS_DB_PASSWORD="${WORDPRESS_DB_PASSWORD}" -e WORDPRESS_DB_NAME="${WORDPRESS_DB_NAME}" -e WORDPRESS_CONFIG_EXTRA="define('WP_HOME','${WP_HOME}');define('WP_SITEURL','${WP_SITEURL}');" -d wordpress:latest
+  - sudo echo "test"
+```
+
+Ainsi, au démarrage des VMS, nous installons docker, et nous démarrons un container Wordpress avec les bonnes variables d'environnement afin que Wordpress fonctionne correctement au démarrage
+
+### Changer le chemin d'accès de Wordpress
+
+Une autre des difficultés est dans la lignée du problème précédent.
+Une fois que nous avons démarrés Wordpress sur nos instances, nous étions redirigés automatiquement lorsqu'on essayit d'accéder à l'application au travers du Load Balancer.
+
+Ce problème était du au fait que Wordpress ne savait pas quelle adresse IP publique il devait utiliser.
+
+Pour solutionner ce projet, nous avons configuré les variables d'environnement `WP_HOME` et `WP_SITEURL`.
+
+Dans notre cas, ces valeurs retournés vers le load balancer au chemin `/app1` tel que : 
+
+```text
+WP_HOME               = "http://${azurerm_public_ip.alb-pubip.ip_address}/app1"
+WP_SITEURL            = "http://${azurerm_public_ip.alb-pubip.ip_address}/app1"
+```
+
+### Accéder à l'app service avec une ip privée
+
+Un problème sur lequel nous avons passé un temps considérable est sur l'accès de l'app service avec une IP privée dans le subnet APP2.
+
+Dans le sujet, il est spécifié que le Load Balancer doit accéder à l'APP2 en passant par le subnet `app2-vnet`.
+
+Le problème que nous avons rencontrés est qu'initialement, un App Service est configuré pour être accessible avec une adresse IP publique.
+
+Pour résoudre ce problème, nous avons créé un Private Endpoint dans le subnet `app2-vnet`. Après création de ce Private Endpoint, l'application était effectivement disponible depuis ce subnet, mais elle n'était pas disponible depuis le subnet du Load Balancer.
+
+Afin que le Load Balancer puisse accéder à APP2, nous avons du créer une zone DNS privée.
+
+Après création de la zone DNS privée, et de la configuration d'un lien entre cette zone DNS privée entre le subnet du load balancer et le subnet `app2-vnet`, nous avons pu accéder à l'application depuis le Load Balancer.
+
+### Générer les règles de firewall pour autoriser les applications à accéder à la BDD
+
+Dans le même esprit que pour le problème précédent, il était difficile pour nous d'identifier quelle adresse IP utilisait l'App service (APP2) pour accéder à la base de données.
+
+Afin de réduire au maximum les flux possibles vers la base de données, nous avons commencé par créer une règle de firewall qui accepte les flux depuis les services Azure, avec l'adresse `0.0.0.0`
+
+À l'avenir, il serait possible d'utiliser un paramètre `possible_outbound_ip_addresses` pour créer les règles de pare-feu.
+
+Dans nos tests, nous avons aussi utilisé ces ressources pour créer ces règles dynamiquement :
+
+```terraform
+locals {
+  func_ips = distinct(flatten([split(",", azurerm_linux_web_app.app2_wordpress.possible_outbound_ip_addresses)])) # Get all possible outbound IP addresses from app service
+}
+
+resource "azurerm_mysql_firewall_rule" "app2-wordpress" {
+  for_each = toset(local.func_ips)
+
+  name                = "APP2-SHARED-${replace(each.value, ".", "_")}-${var.project-code}-FWRULE"
+  resource_group_name = azurerm_resource_group.shared.name
+  server_name         = azurerm_mysql_server.shared-server.name
+  start_ip_address    = each.value
+  end_ip_address      = each.value
+}
+```
