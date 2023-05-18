@@ -26,6 +26,11 @@ resource "azurerm_linux_web_app" "app2_wordpress" {
     WORDPRESS_DB_NAME     = "${azurerm_mysql_database.shared-db.name}"
     WORDPRESS_CONFIG_EXTRA = "define('WP_HOME','http://${azurerm_public_ip.alb-pubip.ip_address}/app2/');define('WP_SITEURL','http://${azurerm_public_ip.alb-pubip.ip_address}/app2/');"
   }
+
+  tags = {
+    PROJECT = var.project-code
+    ENV     = "APP2"
+  }
 }
 
 # Private endpoint for web app in subnet app2-subnet-web
@@ -45,12 +50,22 @@ resource "azurerm_private_endpoint" "app2_wordpress" {
     name = "privatednszonegroup"
     private_dns_zone_ids = [azurerm_private_dns_zone.app2_wordpress.id]
   }
+
+  tags = {
+    PROJECT = var.project-code
+    ENV     = "APP2"
+  }
 }
 
 # Private DNS zone for web app in subnet app2-subnet-web
 resource "azurerm_private_dns_zone" "app2_wordpress" {
   name                = "privatelink.azurewebsites.net"
   resource_group_name = azurerm_resource_group.app2.name
+
+  tags = {
+    PROJECT = var.project-code
+    ENV     = "APP2"
+  }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "app2_wordpress" {
@@ -58,6 +73,10 @@ resource "azurerm_private_dns_zone_virtual_network_link" "app2_wordpress" {
   resource_group_name   = azurerm_resource_group.app2.name
   private_dns_zone_name = azurerm_private_dns_zone.app2_wordpress.name
   virtual_network_id    = azurerm_virtual_network.app2-vnet.id 
+  tags = {
+    PROJECT = var.project-code
+    ENV     = "APP2"
+  }
 }
 
 # Access DNS zone for the core virtual network
@@ -66,6 +85,10 @@ resource "azurerm_private_dns_zone_virtual_network_link" "core_vnet" {
   resource_group_name   = azurerm_resource_group.app2.name
   private_dns_zone_name = azurerm_private_dns_zone.app2_wordpress.name
   virtual_network_id    = azurerm_virtual_network.core-vnet.id
+  tags = {
+    PROJECT = var.project-code
+    ENV     = "CORE"
+  }
 }
 resource "azurerm_private_dns_cname_record" "app2" {
   name                = "app2-jtm-wordpress.privatelink.azurewebsites.net"
@@ -73,6 +96,10 @@ resource "azurerm_private_dns_cname_record" "app2" {
   ttl                 = 3600
   zone_name           = azurerm_private_dns_zone.app2_wordpress.name
   resource_group_name = azurerm_resource_group.app2.name
+  tags = {
+    PROJECT = var.project-code
+    ENV     = "APP2"
+  }
 }
 
 /* resource "azurerm_app_service_custom_hostname_binding" "app2-binding" {

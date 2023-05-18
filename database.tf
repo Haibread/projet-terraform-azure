@@ -17,7 +17,12 @@ resource "azurerm_mysql_server" "shared-server" {
   version    = "8.0"
 
   ssl_enforcement_enabled = false
-  #ssl_minimal_tls_version_enforced = "TLS1_2"
+  ssl_minimal_tls_version_enforced = "TLSEnforcementDisabled"
+
+  tags = {
+    PROJECT = var.project-code
+    ENV     = "SHARED"
+  }
 }
 
 # DB
@@ -28,6 +33,7 @@ resource "azurerm_mysql_database" "shared-db" {
   server_name         = azurerm_mysql_server.shared-server.name
   charset             = "utf8"
   collation           = "utf8_unicode_ci"
+
 }
 
 # Allow access from app service

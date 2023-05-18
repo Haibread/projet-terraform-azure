@@ -5,4 +5,8 @@ resource "azurerm_storage_account" "shared-db-storage-account" {
   resource_group_name      = azurerm_resource_group.shared.name
   account_tier             = "Standard"
   account_replication_type = "LRS"
+  tags = {
+    PROJECT = var.project-code
+    ENV     = "SHARED"
+  }
 }
