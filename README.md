@@ -139,7 +139,7 @@ Ce script est généré dynamiquement grâce à des variables présentes dans le
   }
 ```
 
-Ces variables permettent d'effecuter un template du fichier suivant : 
+Ces variables permettent d'effecuter un template du fichier suivant :
 
 ```yml
 #cloud-config
@@ -161,7 +161,7 @@ Ce problème était du au fait que Wordpress ne savait pas quelle adresse IP pub
 
 Pour solutionner ce projet, nous avons configuré les variables d'environnement `WP_HOME` et `WP_SITEURL`.
 
-Dans notre cas, ces valeurs retournés vers le load balancer au chemin `/app1` tel que : 
+Dans notre cas, ces valeurs retournés vers le load balancer au chemin `/app1` tel que :
 
 ```text
 WP_HOME               = "http://${azurerm_public_ip.alb-pubip.ip_address}/app1"
